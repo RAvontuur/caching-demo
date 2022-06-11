@@ -5,6 +5,9 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.cache.annotation.Cacheable;
+import org.springframework.cache.annotation.EnableCaching;
+import org.springframework.context.annotation.Configuration;
 import org.springframework.stereotype.Service;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -19,6 +22,11 @@ public class CachingDemoApplication {
     public static void main(String[] args) {
         SpringApplication.run(CachingDemoApplication.class, args);
     }
+
+}
+@Configuration
+@EnableCaching
+class CacheConfig {
 
 }
 
@@ -67,6 +75,7 @@ class ContentController {
 @Slf4j
 class ContentService {
 
+    @Cacheable(value = "content")
     public Content findContent(long id, int size, long duration) {
         log.info("findContent({},{},{})",id, size, duration);
         try {
