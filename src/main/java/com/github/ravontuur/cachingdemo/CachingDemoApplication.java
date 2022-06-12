@@ -5,6 +5,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.cache.CacheManager;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.cache.annotation.EnableCaching;
 import org.springframework.context.annotation.Configuration;
@@ -49,13 +50,23 @@ class ContentController {
     @Autowired
     private ContentService contentService;
 
-    private final AtomicInteger finishedCounter = new AtomicInteger();
+    @Autowired
+    private CacheManager cacheManager;
+
+    private final AtomicInteger requestCounter = new AtomicInteger();
 
     @GetMapping("/reset")
     public Boolean reset() {
-        log.info("reset finished counter");
-        finishedCounter.set(0);
+        log.info("reset request counter");
+        requestCounter.set(0);
         return true;
+    }
+
+    @GetMapping("/requests/count")
+    public Long requestsCount() {
+        long count = requestCounter.get();
+        log.info("total requests {}", count);
+        return count;
     }
 
     @GetMapping("/content/{id}")
@@ -63,10 +74,15 @@ class ContentController {
             @PathVariable(value = "id") Long id,
             @RequestParam(value = "size", required = false, defaultValue = "10") Integer size,
             @RequestParam(value = "duration", required = false, defaultValue = "1000") Long duration) {
-        log.info("start get /content/{}", id);
+        log.debug("start get /content/{}", id);
         Content result = contentService.findContent(id, size, duration);
-        log.info("finished get /content/{}, total finished {}", id, finishedCounter.incrementAndGet());
+        log.debug("finished get /content/{}, total finished {}", id, requestCounter.incrementAndGet());
         return result;
+    }
+
+    @GetMapping("/cacheinfo")
+    public String cacheinfo() {
+        return cacheManager.getCacheNames().toString();
     }
 }
 
@@ -75,9 +91,9 @@ class ContentController {
 @Slf4j
 class ContentService {
 
-    @Cacheable(value = "content")
+    @Cacheable(value = "content", key = "#id")
     public Content findContent(long id, int size, long duration) {
-        log.info("findContent({},{},{})",id, size, duration);
+        log.info("CACHE MISS: findContent({},{},{})",id, size, duration);
         try {
             Thread.sleep(duration);
         } catch (InterruptedException e) {

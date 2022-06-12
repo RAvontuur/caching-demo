@@ -44,8 +44,8 @@ class CachingDemoApplicationTests {
     @Test
     void testWithLoad() throws InterruptedException, ExecutionException {
 
-        int nCalls = 100;
-        int nThreads = 100;
+        int nCalls = 1000;
+        int nThreads = 20;
         long timeoutClient = 10000; // ms
         int durationQuery = 2000; // ms
         int bodySize = 5;
@@ -58,8 +58,8 @@ class CachingDemoApplicationTests {
         Collection<TestCallable> callables = new ArrayList<>();
 
         for (int callId = 0; callId < nCalls; callId++) {
-            long id = callId;
-            callables.add(new TestCallable(callId, id, durationQuery, bodySize));
+            long id = callId % 4;
+            callables.add(new TestCallable(callId, id, durationQuery + callId, bodySize));
         }
         log.info("Created {} callables", callables.size());
         // invoke all waits until all futures are completed or timeout expired
@@ -81,7 +81,9 @@ class CachingDemoApplicationTests {
 
         int nSuccessful = nCalls - nCancelled;
         log.info("Successful calls: {}, Cancelled calls: {}", nSuccessful, nCancelled);
-        log.info("Query duration: {} ms", durationQuery);
         log.info("Average duration successful calls: {} ms", totalDuration.get() / nSuccessful);
+
+        Long count = webClient.get().uri("/requests/count").retrieve().bodyToMono(Long.class).block();
+        log.info("Number of requests handled by service: {}", count);
     }
 }
