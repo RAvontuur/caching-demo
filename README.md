@@ -60,3 +60,22 @@ observe unexpected cache misses\
 solution: `sync = true`
 \
 The use of `sync = true` has some limitations. See Spring documentation.
+
+# Hazelcast
+
+- do not forget to include hazelcast.com:hazelcast-spring
+- restart all Hazelcast server instances to evict all entries
+- cache eviction will be propagated top all instances (including near caches)
+- new release service instance: ensure compatibility new version of Content-class
+- Hazelcast has a near cache with microsecond-level performance.\
+Do not place @Cacheable in microservices, but in its clients.
+- deploy Hazelcast Manager (without license up to two Hazelcast server instances)
+
+EXERCISE: test with two instances of Hazelcast Server, and observe\
+replication behavior in Hazelcast Manager.
+
+EXERCISE: caching named lists of Content-items.\
+How to evict lists if a Content-item changes?
+
+EXERCISE: use of @CachePut
+

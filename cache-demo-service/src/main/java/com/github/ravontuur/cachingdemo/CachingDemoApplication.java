@@ -1,14 +1,20 @@
 package com.github.ravontuur.cachingdemo;
 
-import lombok.*;
+import com.hazelcast.client.config.ClientConfig;
+import com.hazelcast.config.NearCacheConfig;
+import com.hazelcast.spring.cache.HazelcastCacheManager;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
-import org.springframework.cache.CacheManager;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.cache.annotation.EnableCaching;
+import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.stereotype.Service;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -16,6 +22,7 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.io.Serializable;
 import java.util.concurrent.atomic.AtomicInteger;
 
 @SpringBootApplication
@@ -26,9 +33,21 @@ public class CachingDemoApplication {
     }
 
 }
+
 @Configuration
 @EnableCaching
+@Slf4j
 class CacheConfig {
+
+    @Bean
+    ClientConfig clientConfig() {
+        ClientConfig clientConfig = new ClientConfig();
+
+        NearCacheConfig nearCacheConfig = new NearCacheConfig();
+
+        clientConfig.addNearCacheConfig(nearCacheConfig);
+        return clientConfig;
+    }
 
 }
 
@@ -36,7 +55,7 @@ class CacheConfig {
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-class Content {
+class Content implements Serializable {
     private Long id;
     private Integer size;
     private Long duration;
@@ -52,7 +71,7 @@ class ContentController {
     private ContentService contentService;
 
     @Autowired
-    private CacheManager cacheManager;
+    HazelcastCacheManager hazelcastCacheManager;
 
     private final AtomicInteger requestCounter = new AtomicInteger();
 
@@ -80,6 +99,7 @@ class ContentController {
         log.debug("finished get /content/{}, total finished {}", id, requestCounter.incrementAndGet());
         return result;
     }
+
     @GetMapping("/content/evict/{id}")
     public String evict(@PathVariable(value = "id") Long id) {
         contentService.cacheEvict(id);
@@ -88,7 +108,7 @@ class ContentController {
 
     @GetMapping("/cacheinfo")
     public String cacheinfo() {
-        return cacheManager.getCacheNames().toString();
+        return hazelcastCacheManager.getCacheNames().toString();
     }
 }
 
@@ -99,7 +119,7 @@ class ContentService {
 
     @Cacheable(value = "content", key = "#id", sync = true)
     public Content findContent(long id, int size, long duration) {
-        log.info("CACHE MISS: findContent({},{},{})",id, size, duration);
+        log.info("CACHE MISS: findContent({},{},{})", id, size, duration);
         try {
             Thread.sleep(duration);
         } catch (InterruptedException e) {
@@ -114,6 +134,7 @@ class ContentService {
                 .body("*".repeat(size))
                 .build();
     }
+
     @CacheEvict(value = "content", key = "#id")
     public void cacheEvict(Long id) {
         log.info("CACHE EVICT id={}", id);
