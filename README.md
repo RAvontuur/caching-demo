@@ -45,3 +45,10 @@ EXERCISE: migrate to using ehCache (incl. ehcache.xml , eg TTL)
 add info log message with unique search term "CACHE MISS"\
 from distributed logging solution (Kibana, Splunk) obtain statistics\
 detect increase in CACHE MISS and create alerts.
+
+## cache eviction
+
+example:\
+http://localhost:8080/content/evict/1
+
+(repeat for each running instance of your service)

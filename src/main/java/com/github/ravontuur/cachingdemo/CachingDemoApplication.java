@@ -6,6 +6,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.cache.CacheManager;
+import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.cache.annotation.EnableCaching;
 import org.springframework.context.annotation.Configuration;
@@ -79,6 +80,11 @@ class ContentController {
         log.debug("finished get /content/{}, total finished {}", id, requestCounter.incrementAndGet());
         return result;
     }
+    @GetMapping("/content/evict/{id}")
+    public String evict(@PathVariable(value = "id") Long id) {
+        contentService.cacheEvict(id);
+        return "evicted: " + id;
+    }
 
     @GetMapping("/cacheinfo")
     public String cacheinfo() {
@@ -107,5 +113,9 @@ class ContentService {
                 .title(String.format("Title %d", id))
                 .body("*".repeat(size))
                 .build();
+    }
+    @CacheEvict(value = "content", key = "#id")
+    public void cacheEvict(Long id) {
+        log.info("CACHE EVICT id={}", id);
     }
 }
