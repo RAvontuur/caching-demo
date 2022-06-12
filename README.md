@@ -41,14 +41,22 @@ interesting findings:
 
 EXERCISE: migrate to using ehCache (incl. ehcache.xml , eg TTL)
 
-## logging
+# logging
 add info log message with unique search term "CACHE MISS"\
 from distributed logging solution (Kibana, Splunk) obtain statistics\
 detect increase in CACHE MISS and create alerts.
 
-## cache eviction
+# cache eviction
 
 example:\
 http://localhost:8080/content/evict/1
 
 (repeat for each running instance of your service)
+
+# thundering herd issue
+look at the application log of service\
+observe unexpected cache misses\
+\
+solution: `sync = true`
+\
+The use of `sync = true` has some limitations. See Spring documentation.

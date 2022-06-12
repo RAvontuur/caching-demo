@@ -97,7 +97,7 @@ class ContentController {
 @Slf4j
 class ContentService {
 
-    @Cacheable(value = "content", key = "#id")
+    @Cacheable(value = "content", key = "#id", sync = true)
     public Content findContent(long id, int size, long duration) {
         log.info("CACHE MISS: findContent({},{},{})",id, size, duration);
         try {
