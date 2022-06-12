@@ -79,3 +79,14 @@ How to evict lists if a Content-item changes?
 
 EXERCISE: use of @CachePut
 
+# Post Mortem
+
+How to prevent this?
+\
+Be aware of:
+- concurrency issues
+- (eventual) consistency issues
+- the order of REST-calls is not guaranteed
+- caching solution becoming the single point of failure
+- thundering herds
+
