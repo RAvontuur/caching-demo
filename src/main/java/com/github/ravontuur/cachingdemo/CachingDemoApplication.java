@@ -75,7 +75,7 @@ class ContentController {
 @Slf4j
 class ContentService {
 
-    @Cacheable(value = "content")
+    @Cacheable(value = "content", key = "#id")
     public Content findContent(long id, int size, long duration) {
         log.info("findContent({},{},{})",id, size, duration);
         try {
