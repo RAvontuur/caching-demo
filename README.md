@@ -72,7 +72,10 @@ Do not place @Cacheable in microservices, but in its clients.
 - deploy Hazelcast Manager (without license up to two Hazelcast server instances)
 
 EXERCISE: test with two instances of Hazelcast Server, and observe\
-replication behavior in Hazelcast Manager.
+replication behavior in Hazelcast Management Center.
+https://docs.hazelcast.com/management-center/4.2022.01/getting-started
+
+`java -Dhazelcast.mc.http.port=8083 -jar hazelcast-management-center-4.2022.01.jar`
 
 EXERCISE: caching named lists of Content-items.\
 How to evict lists if a Content-item changes?
