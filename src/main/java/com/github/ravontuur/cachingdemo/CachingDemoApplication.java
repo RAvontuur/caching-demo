@@ -50,6 +50,12 @@ class ContentController {
         return true;
     }
 
+    @GetMapping("/requests/count")
+    public Integer count() {
+        log.info("show counter");
+        return finishedCounter.get();
+    }
+
     @GetMapping("/content/{id}")
     public Content content(
             @PathVariable(value = "id") Long id,
