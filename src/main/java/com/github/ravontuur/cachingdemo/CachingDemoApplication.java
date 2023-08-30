@@ -11,6 +11,7 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicInteger;
 
 @SpringBootApplication
@@ -37,12 +38,9 @@ class Content {
 @RestController
 @Slf4j
 class ContentController {
-
     @Autowired
     private ContentService contentService;
-
     private final AtomicInteger finishedCounter = new AtomicInteger();
-
     @GetMapping("/reset")
     public Boolean reset() {
         log.info("reset finished counter");
@@ -72,21 +70,46 @@ class ContentController {
 @Service
 @Slf4j
 class ContentService {
-
+    @Autowired
+    private Database database;
     public Content findContent(long id, int size, long duration) {
-        log.info("findContent({},{},{})",id, size, duration);
+        log.info("findContent({},{},{})", id, size, duration);
+        return database.executeQuery(id, size, duration);
+    }
+}
+
+@Service
+@Slf4j
+class Database {
+
+    public static final int N_DATABASE_INSTANCES = 10;
+    public static final int QUERY_TIMEOUT = 5000; // ms
+
+    ExecutorService executorService = Executors.newFixedThreadPool(N_DATABASE_INSTANCES);
+
+    public Content executeQuery(long id, int size, long duration) {
+
+        Future<Content> contentFuture = executorService.submit(() -> {
+            log.info("executeQuery({},{},{})", id, size, duration);
+            try {
+                Thread.sleep(duration);
+            } catch (InterruptedException e) {
+                throw new RuntimeException(e);
+            }
+
+            return Content.builder()
+                    .id(id)
+                    .size(size)
+                    .duration(duration)
+                    .title(String.format("Title %d", id))
+                    .body("*".repeat(size))
+                    .build();
+        });
+
         try {
-            Thread.sleep(duration);
-        } catch (InterruptedException e) {
+            return contentFuture.get(QUERY_TIMEOUT, TimeUnit.MILLISECONDS);
+        } catch (InterruptedException | ExecutionException | TimeoutException e) {
             throw new RuntimeException(e);
         }
-
-        return Content.builder()
-                .id(id)
-                .size(size)
-                .duration(duration)
-                .title(String.format("Title %d", id))
-                .body("*".repeat(size))
-                .build();
     }
 }
