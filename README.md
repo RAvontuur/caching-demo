@@ -69,13 +69,17 @@ The use of `sync = true` has some limitations. See Spring documentation.
 - new release service instance: ensure compatibility new version of Content-class
 - Hazelcast has a near cache with microsecond-level performance.\
 Do not place @Cacheable in microservices, but in its clients.
-- deploy Hazelcast Manager (without license up to two Hazelcast server instances)
+- deploy Hazelcast Management Center (without license up to two Hazelcast server instances)
 
 EXERCISE: test with two instances of Hazelcast Server, and observe\
 replication behavior in Hazelcast Management Center.
 https://docs.hazelcast.com/management-center/4.2022.01/getting-started
 
-`java -Dhazelcast.mc.http.port=8083 -jar hazelcast-management-center-4.2022.01.jar`
+`java -Dhazelcast.mc.http.port=8083 -jar hazelcast-management-center-*.jar`
+
+or:
+`cd Downloads/hazelcast-management-center-5.3.2/bin`
+`./start.sh 8180`
 
 EXERCISE: caching named lists of Content-items.\
 How to evict lists if a Content-item changes?
