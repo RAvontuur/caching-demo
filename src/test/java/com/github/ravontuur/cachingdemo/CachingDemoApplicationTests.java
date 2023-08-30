@@ -61,10 +61,9 @@ class CachingDemoApplicationTests {
 
         // load
         int nCalls = 100;
-        int nThreads = 20;
+        int nThreads = 2;
         int idOffset = 0; // start range of ids
-        int idDiv = 1;   // repeated ids (the thundering herd)
-        int idMod = 10000; // max number of ids (recycle)
+        int idMod = 2; // max number of ids (recycle)
 
         // client side
         long port = 8080;
@@ -77,7 +76,7 @@ class CachingDemoApplicationTests {
 
         // other
         long timeoutLoadTest = 100000; // ms
-        long sleepBeforeCountStats = responseTimeoutClient * 2; //ms
+        long sleepBeforeCountStats = 1000; //ms
         long responseTimeoutCountStats = 20000; //ms
 
         webClient = createWebClient(responseTimeoutClient, port);
@@ -91,7 +90,7 @@ class CachingDemoApplicationTests {
         Collection<TestCallable> callables = new ArrayList<>();
 
         for (int callId = 0; callId < nCalls; callId++) {
-            long id = idOffset + (callId / idDiv) % idMod;
+            long id = idOffset + callId % idMod;
             callables.add(new TestCallable(callId, id, durationQuery, bodySize));
         }
         log.info("Created {} callables", callables.size());

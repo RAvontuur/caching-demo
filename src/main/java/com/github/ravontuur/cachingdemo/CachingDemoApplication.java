@@ -70,8 +70,10 @@ class ContentController {
 @Service
 @Slf4j
 class ContentService {
+
     @Autowired
     private Database database;
+
     public Content findContent(long id, int size, long duration) {
         log.info("findContent({},{},{})", id, size, duration);
         return database.executeQuery(id, size, duration);
@@ -82,20 +84,25 @@ class ContentService {
 @Slf4j
 class Database {
 
-    public static final int N_DATABASE_INSTANCES = 10;
+    public static final int N_DATABASE_THREADS = 20;
+    public static final int N_DATABASE_CPU = 20;
     public static final int QUERY_TIMEOUT = 5000; // ms
 
-    ExecutorService executorService = Executors.newFixedThreadPool(N_DATABASE_INSTANCES);
+    ExecutorService executorService = Executors.newFixedThreadPool(N_DATABASE_THREADS);
+
+    private final AtomicInteger competingThreads = new AtomicInteger();
 
     public Content executeQuery(long id, int size, long duration) {
 
+        competingThreads.incrementAndGet();
         Future<Content> contentFuture = executorService.submit(() -> {
-            log.info("executeQuery({},{},{})", id, size, duration);
-            try {
-                Thread.sleep(duration);
-            } catch (InterruptedException e) {
-                throw new RuntimeException(e);
+            log.info("executeQuery({},{},{}, competing={})", id, size, duration, competingThreads.get());
+
+            long workToComplete = duration;
+            while (workToComplete > 200) {
+                workToComplete = workToComplete - workms(200);
             }
+            workms(workToComplete);
 
             return Content.builder()
                     .id(id)
@@ -107,9 +114,21 @@ class Database {
         });
 
         try {
-            return contentFuture.get(QUERY_TIMEOUT, TimeUnit.MILLISECONDS);
+            Content result = contentFuture.get(QUERY_TIMEOUT, TimeUnit.MILLISECONDS);
+            competingThreads.decrementAndGet();
+            return result;
         } catch (InterruptedException | ExecutionException | TimeoutException e) {
+            int competing = competingThreads.getAndDecrement();
+            throw new RuntimeException("Failed id=" + id + ", competingThreads=" + competing, e);
+        }
+    }
+
+    private long workms(long duration) {
+        try {
+            Thread.sleep(duration * Long.max(1, (competingThreads.get() / N_DATABASE_CPU)));
+        } catch (InterruptedException e) {
             throw new RuntimeException(e);
         }
+        return duration;
     }
 }
